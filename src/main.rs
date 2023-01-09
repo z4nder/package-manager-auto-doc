@@ -225,7 +225,7 @@ async fn extract_copyright_from_github(git_url: &String) -> String {
     git_file = git_file.replace("github.com/", "raw.githubusercontent.com/");
     git_file = format!("{}/master/LICENSE", &git_file);
 
-    let mut res = reqwest::get(]&git_file)
+    let mut res = reqwest::get(&git_file)
         .await
         .expect("[ERROR] -> Failed to get current package");
 
