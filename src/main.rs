@@ -1,6 +1,5 @@
 use csv::Writer;
 use std::{collections::HashMap, fs::File};
-
 mod types;
 
 use crate::types::{
@@ -53,8 +52,15 @@ async fn insert_composer_data_in_to_csv(
             let version_info = search_valid_version(&value, &package_manager_info.package.versions)
                 .expect("Invalid versionFailed to get version");
 
-            let package_row =
-                composer_package_row(&package_manager_info, version_info, &package_name);
+            let copyright =
+                extract_copyright_from_github(&package_manager_info.package.repository).await;
+
+            let package_row = composer_package_row(
+                &package_manager_info,
+                version_info,
+                &package_name,
+                copyright,
+            );
             csv_file.serialize(package_row).unwrap();
         }
     }
@@ -69,7 +75,19 @@ async fn insert_package_json_data_in_to_csv(
 
         let package_manager_info = search_npm_package(package_name).await;
 
-        let package_row = package_json_row(package_manager_info.collected.metadata, value);
+        let github_link = match &package_manager_info.collected.metadata.links.repository {
+            None => String::from("empty"),
+            Some(value) => value.to_string(),
+        };
+        let mut copyright = String::from("Not Found");
+
+        if github_link != "empty" {
+            copyright = extract_copyright_from_github(&github_link).await;
+        }
+
+        let package_row =
+            package_json_row(&package_manager_info.collected.metadata, value, copyright);
+
         csv_file.serialize(package_row).unwrap();
     }
 }
@@ -157,6 +175,7 @@ fn composer_package_row(
     package_manager_info: &PackagistResponse,
     version_info: &PackagistVersion,
     package_name: &String,
+    copyright: String,
 ) -> PackageRow {
     let license = version_info
         .license
@@ -168,7 +187,7 @@ fn composer_package_row(
     PackageRow {
         name: package_manager_info.package.name.to_string(),
         description: package_manager_info.package.description.to_string(),
-        copyright: license.to_string(),
+        copyright: copyright,
         license: license,
         version: version_info.version.to_string(),
         impementation_description: String::from("installed with composer at project"),
@@ -179,20 +198,64 @@ fn composer_package_row(
     }
 }
 
-fn package_json_row(package_manager_info: NpmMetaData, version: String) -> PackageRow {
+fn package_json_row(
+    package_manager_info: &NpmMetaData,
+    version: String,
+    copyright: String,
+) -> PackageRow {
     PackageRow {
         name: package_manager_info.name.to_string(),
-        description: match package_manager_info.description {
+        description: match &package_manager_info.description {
             None => String::from("empty"),
-            Some(description) => description,
+            Some(description) => description.to_string(),
         },
-        copyright: package_manager_info.license.to_string(),
-        license: package_manager_info.license,
+        copyright: copyright,
+        license: package_manager_info.license.to_string(),
         version: version,
         impementation_description: String::from("installed with npm at project"),
         path: format!("/node_modules/{}", package_manager_info.name),
-        reference: package_manager_info.links.npm,
+        reference: package_manager_info.links.npm.to_string(),
         language: String::from("JavaScript"),
         install: String::from("npm"),
     }
+}
+
+async fn extract_copyright_from_github(git_url: &String) -> String {
+    let mut git_file = git_url.to_string();
+    git_file = git_file.replace("github.com/", "raw.githubusercontent.com/");
+    git_file = format!("{}/master/LICENSE", &git_file);
+
+    let mut res = reqwest::get(]&git_file)
+        .await
+        .expect("[ERROR] -> Failed to get current package");
+
+    if res.status() == 404 {
+        git_file = git_file.replace("LICENSE", "LICENSE.md");
+        res = reqwest::get(&git_file)
+            .await
+            .expect("[ERROR] -> Failed to get current package");
+    }
+
+    if res.status() == 404 {
+        git_file = git_file.replace("LICENSE.md", "LICENSE.txt");
+        res = reqwest::get(&git_file)
+            .await
+            .expect("[ERROR] -> Failed to get current package");
+    }
+
+    let text_response = res
+        .text()
+        .await
+        .expect("[ERROR] -> Failed to parse to json");
+
+    // TODO Case find on Copyright occurence and net is not Copyright stop search to optimize
+    //  Look need lowercase reponse string
+    let formated: Vec<&str> = text_response.split("\n").collect();
+    let formated: Vec<&str> = formated
+        .iter()
+        .filter(|&element| element.contains("Copyright"))
+        .cloned()
+        .collect();
+
+    formated.join(", ")
 }

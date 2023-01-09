@@ -74,4 +74,5 @@ pub struct NpmMetaData {
 #[derive(Deserialize, Debug)]
 pub struct NpmLinks {
     pub npm: String,
+    pub repository: Option<String>,
 }
