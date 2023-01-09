@@ -7,13 +7,15 @@ use crate::types::{
     ComposerPackage, PackageRow, PackagistResponse, PackagistVersion, VersionNotFound,
 };
 
+const RESULT_FILE_PATH: &str = "/home/gadsdev/projects/rust/generate-libs-docs/files/result.csv";
+const COMPOSER_FILE_PATH: &str =
+    "/home/gadsdev/projects/rust/generate-libs-docs/files/composer.json";
+
 #[tokio::main]
 async fn main() {
     let file = read_file();
 
-    let mut result_file =
-        Writer::from_path("/home/gadsdev/projects/rust/generate-libs-docs/files/result.csv")
-            .unwrap();
+    let mut result_file = Writer::from_path(RESULT_FILE_PATH).unwrap();
 
     for (key, value) in file.require {
         let package_name = key.to_string();
@@ -42,17 +44,15 @@ async fn main() {
             result_file.serialize(package_row).unwrap();
         }
     }
-
-    // dbg!("{:#?}",  result_file);
 }
 
 fn read_file() -> ComposerPackage {
-    let file_path = "/home/gadsdev/projects/rust/generate-libs-docs/files/composer.json";
-    let string_file = std::fs::read_to_string(&file_path).unwrap();
+    let string_file = std::fs::read_to_string(COMPOSER_FILE_PATH).unwrap();
 
     serde_json::from_str::<ComposerPackage>(&string_file).unwrap()
 }
 
+// TODO Recatory to parallel
 async fn search_composer_package(package_name: &String) -> PackagistResponse {
     let url = format!("https://repo.packagist.org/packages/{}.json", package_name);
 
