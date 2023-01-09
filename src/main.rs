@@ -1,5 +1,5 @@
 use csv::Writer;
-use std::collections::HashMap;
+use std::{collections::HashMap, fs::File};
 
 mod types;
 
@@ -13,25 +13,25 @@ const COMPOSER_FILE_PATH: &str =
 
 #[tokio::main]
 async fn main() {
-    let file = read_file();
+    let composer_json = read_composer_json(COMPOSER_FILE_PATH);
 
     let mut result_file = Writer::from_path(RESULT_FILE_PATH).unwrap();
 
-    for (key, value) in file.require {
-        let package_name = key.to_string();
-        if key != "php" && !key.contains("ext") {
-            let package_manager_info = search_composer_package(&package_name).await;
+    insert_composer_data_in_to_csv(composer_json.require, &mut result_file).await;
+    insert_composer_data_in_to_csv(composer_json.require_dev, &mut result_file).await;
+}
 
-            let version_info =
-                search_valid_version(&value, &package_manager_info.package.versions).unwrap();
+fn read_composer_json(file_path: &str) -> ComposerPackage {
+    let string_file = std::fs::read_to_string(file_path).unwrap();
 
-            let package_row =
-                composer_package_row(&package_manager_info, version_info, &package_name);
-            result_file.serialize(package_row).unwrap();
-        }
-    }
+    serde_json::from_str::<ComposerPackage>(&string_file).unwrap()
+}
 
-    for (key, value) in file.require_dev {
+async fn insert_composer_data_in_to_csv(
+    values: HashMap<String, String>,
+    csv_file: &mut Writer<File>,
+) {
+    for (key, value) in values {
         let package_name = key.to_string();
         if key != "php" && !key.contains("ext") && key != "enlightn/enlightnpro" {
             let package_manager_info = search_composer_package(&package_name).await;
@@ -41,18 +41,13 @@ async fn main() {
 
             let package_row =
                 composer_package_row(&package_manager_info, version_info, &package_name);
-            result_file.serialize(package_row).unwrap();
+            csv_file.serialize(package_row).unwrap();
         }
     }
 }
 
-fn read_file() -> ComposerPackage {
-    let string_file = std::fs::read_to_string(COMPOSER_FILE_PATH).unwrap();
+// TODO Recatory to parallel requests, first get all values formatted next inser in to csv
 
-    serde_json::from_str::<ComposerPackage>(&string_file).unwrap()
-}
-
-// TODO Recatory to parallel
 async fn search_composer_package(package_name: &String) -> PackagistResponse {
     let url = format!("https://repo.packagist.org/packages/{}.json", package_name);
 
