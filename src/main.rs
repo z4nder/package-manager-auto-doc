@@ -4,27 +4,41 @@ use std::{collections::HashMap, fs::File};
 mod types;
 
 use crate::types::{
-    ComposerPackage, PackageRow, PackagistResponse, PackagistVersion, VersionNotFound,
+    ComposerPackage, NpmMetaData, NpmResponse, PackageJson, PackageRow, PackagistResponse,
+    PackagistVersion, VersionNotFound,
 };
 
 const RESULT_FILE_PATH: &str = "/home/gadsdev/projects/rust/generate-libs-docs/files/result.csv";
 const COMPOSER_FILE_PATH: &str =
     "/home/gadsdev/projects/rust/generate-libs-docs/files/composer.json";
+const PACKAGE_JSON_FILE_PATH: &str =
+    "/home/gadsdev/projects/rust/generate-libs-docs/files/package.json";
 
 #[tokio::main]
 async fn main() {
     let composer_json = read_composer_json(COMPOSER_FILE_PATH);
 
+    let package_json = read_package_json(PACKAGE_JSON_FILE_PATH);
+
     let mut result_file = Writer::from_path(RESULT_FILE_PATH).unwrap();
 
     insert_composer_data_in_to_csv(composer_json.require, &mut result_file).await;
     insert_composer_data_in_to_csv(composer_json.require_dev, &mut result_file).await;
+
+    insert_package_json_data_in_to_csv(package_json.dependencies, &mut result_file).await;
+    insert_package_json_data_in_to_csv(package_json.dev_dependencies, &mut result_file).await;
 }
 
 fn read_composer_json(file_path: &str) -> ComposerPackage {
     let string_file = std::fs::read_to_string(file_path).unwrap();
 
     serde_json::from_str::<ComposerPackage>(&string_file).unwrap()
+}
+
+fn read_package_json(file_path: &str) -> PackageJson {
+    let string_file = std::fs::read_to_string(file_path).unwrap();
+
+    serde_json::from_str::<PackageJson>(&string_file).unwrap()
 }
 
 async fn insert_composer_data_in_to_csv(
@@ -46,18 +60,56 @@ async fn insert_composer_data_in_to_csv(
     }
 }
 
-// TODO Recatory to parallel requests, first get all values formatted next inser in to csv
+async fn insert_package_json_data_in_to_csv(
+    values: HashMap<String, String>,
+    csv_file: &mut Writer<File>,
+) {
+    for (key, value) in values {
+        let package_name = clear_package_json_package_name(key);
 
+        let package_manager_info = search_npm_package(package_name).await;
+
+        let package_row = package_json_row(package_manager_info.collected.metadata, value);
+        csv_file.serialize(package_row).unwrap();
+    }
+}
+
+// TODO Recatory to parallel requests, first get all values formatted next inser in to csv
+async fn search_npm_package(package_name: String) -> NpmResponse {
+    let url = format!("https://api.npms.io/v2/package/{}", package_name);
+
+    let res = reqwest::get(url)
+        .await
+        .expect("[ERROR] -> Failed to get current package");
+
+    res.json::<NpmResponse>()
+        .await
+        .expect("[ERROR] -> Failed to parse to json")
+}
+
+// TODO Recatory to parallel requests, first get all values formatted next inser in to csv
 async fn search_composer_package(package_name: &String) -> PackagistResponse {
     let url = format!("https://repo.packagist.org/packages/{}.json", package_name);
 
     let res = reqwest::get(url)
         .await
-        .expect("[ERROR] -> Failed to get current price");
+        .expect("[ERROR] -> Failed to get current package");
 
     res.json::<PackagistResponse>()
         .await
         .expect("[ERROR] -> Failed to parse to json")
+}
+
+fn clear_package_json_package_name(package_name: String) -> String {
+    if package_name.contains("/") {
+        return package_name
+            .split("/")
+            .last()
+            .expect("Failed to parse package name")
+            .to_string();
+    }
+
+    package_name
 }
 
 fn search_valid_version<'a>(
@@ -124,5 +176,23 @@ fn composer_package_row(
         reference: package_manager_info.package.repository.to_string(),
         language: package_manager_info.package.language.to_string(),
         install: String::from("composer"),
+    }
+}
+
+fn package_json_row(package_manager_info: NpmMetaData, version: String) -> PackageRow {
+    PackageRow {
+        name: package_manager_info.name.to_string(),
+        description: match package_manager_info.description {
+            None => String::from("empty"),
+            Some(description) => description,
+        },
+        copyright: package_manager_info.license.to_string(),
+        license: package_manager_info.license,
+        version: version,
+        impementation_description: String::from("installed with npm at project"),
+        path: format!("/node_modules/{}", package_manager_info.name),
+        reference: package_manager_info.links.npm,
+        language: String::from("JavaScript"),
+        install: String::from("npm"),
     }
 }

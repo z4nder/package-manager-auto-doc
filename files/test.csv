@@ -1,0 +1,22 @@
+department,related to,name,license period,material / not material,license type,link,remote version,installed version,defined version,author
+kessler,stuff,@ttskch/select2-bootstrap4-theme,perpetual,material,MIT,git+ssh://git@github.com/ttskch/select2-bootstrap4-theme.git,1.5.2,1.5.2,^1.5.2,Takashi Kanemoto <ttskch@gmail.com>
+kessler,stuff,alpinejs,perpetual,material,MIT,https://registry.npmjs.org/alpinejs/-/alpinejs-3.10.5.tgz,3.10.5,3.10.5,^3.9.5,Caleb Porzio
+kessler,stuff,datatables,perpetual,material,MIT,git+https://github.com/DataTables/DataTables.git,1.10.18,1.10.18,^1.10.18,Allan Jardine http://sprymedia.co.uk
+kessler,stuff,daterangepicker,perpetual,material,MIT,git+https://github.com/dangrossman/daterangepicker.git,3.1.0,3.1.0,^3.1.0,Dan Grossman dan@dangrossman.info http://www.dangrossman.info
+kessler,stuff,he,perpetual,material,MIT,git+https://github.com/mathiasbynens/he.git,1.2.0,1.2.0,^1.2.0,Mathias Bynens https://mathiasbynens.be/
+kessler,stuff,select2,perpetual,material,MIT,git://github.com/select2/select2.git,4.0.13,4.0.13,4.0.13,Kevin Brown https://github.com/kevin-brown
+kessler,stuff,toastr,perpetual,material,MIT,git://github.com/CodeSeven/toastr.git,2.1.4,2.1.4,^2.1.4,n/a
+kessler,stuff,vue-router,perpetual,material,MIT,git+https://github.com/vuejs/vue-router.git,3.6.5,3.6.5,^3.5.3,Evan You
+kessler,stuff,axios,perpetual,material,MIT,git+https://github.com/axios/axios.git,0.21.4,0.21.4,^0.21.4,Matt Zabriskie
+kessler,stuff,bootstrap,perpetual,material,MIT,git+https://github.com/twbs/bootstrap.git,4.6.2,4.6.2,^4.6.1,The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)
+kessler,stuff,cross-env,perpetual,material,MIT,git+https://github.com/kentcdodds/cross-env.git,7.0.3,7.0.3,^7.0,Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com)
+kessler,stuff,jquery,perpetual,material,MIT,git+https://github.com/jquery/jquery.git,3.6.3,3.6.1,^3.6.1,OpenJS Foundation and other contributors https://github.com/jquery/jquery/blob/3.6.1/AUTHORS.txt
+kessler,stuff,laravel-mix,perpetual,material,MIT,git+https://github.com/JeffreyWay/laravel-mix.git,6.0.49,6.0.49,^6.0.39,Jeffrey Way
+kessler,stuff,laravel-mix-purgecss,perpetual,material,MIT,git+https://github.com/spatie/laravel-mix-purgecss.git,6.0.0,6.0.0,^6.0.0,Sebastian De Deyne
+kessler,stuff,lodash,perpetual,material,MIT,git+https://github.com/lodash/lodash.git,4.17.21,4.17.21,^4.17.21,John-David Dalton <john.david.dalton@gmail.com>
+kessler,stuff,popper.js,perpetual,material,MIT,git+https://github.com/FezVrasta/popper.js.git,1.16.1,1.16.1,^1.12,Federico Zivolo <federico.zivolo@gmail.com>
+kessler,stuff,resolve-url-loader,perpetual,material,MIT,git+https://github.com/bholloway/resolve-url-loader.git,4.0.0,4.0.0,^4.0.0,bholloway
+kessler,stuff,sass,perpetual,material,MIT,git+https://github.com/sass/dart-sass.git,1.57.1,1.56.1,^1.48.0,Natalie Weizenbaum nweiz@google.com https://github.com/nex3
+kessler,stuff,sass-loader,perpetual,material,MIT,git+https://github.com/webpack-contrib/sass-loader.git,8.0.2,8.0.2,^8.0.0,J. Tangelder
+kessler,stuff,vue,perpetual,material,MIT,git+https://github.com/vuejs/vue.git,2.7.14,2.7.14,^2.6.11,Evan You
+kessler,stuff,vue-template-compiler,perpetual,material,MIT,git+https://github.com/vuejs/vue.git,2.7.14,2.7.14,^2.6.11,Evan You

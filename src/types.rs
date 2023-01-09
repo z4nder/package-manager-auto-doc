@@ -46,3 +46,32 @@ pub struct PackagistVersion {
 pub struct VersionNotFound {
     pub message: String,
 }
+
+// NPM
+#[derive(Deserialize, Debug)]
+pub struct PackageJson {
+    pub dependencies: HashMap<String, String>,
+    #[serde(rename = "devDependencies")]
+    pub dev_dependencies: HashMap<String, String>,
+}
+#[derive(Deserialize, Debug)]
+pub struct NpmResponse {
+    pub collected: NpmCollected,
+}
+#[derive(Deserialize, Debug)]
+pub struct NpmCollected {
+    pub metadata: NpmMetaData,
+}
+#[derive(Deserialize, Debug)]
+pub struct NpmMetaData {
+    pub name: String,
+    pub version: String,
+    pub description: Option<String>,
+    pub links: NpmLinks,
+    pub license: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct NpmLinks {
+    pub npm: String,
+}
