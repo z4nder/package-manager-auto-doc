@@ -24,13 +24,20 @@ async fn main() {
             let version_info =
                 search_valid_version(&value, &package_manager_info.package.versions).unwrap();
 
+            let license = version_info
+                .license
+                .clone()
+                .into_iter()
+                .nth(0)
+                .expect("Not found license");
+
             result_file
                 .serialize(PackageRow {
                     name: package_manager_info.package.name,
                     description: package_manager_info.package.description,
-                    copyright: version_info.to_string(),
-                    license: version_info,
-                    version: value.replace("^", ""),
+                    copyright: license.to_string(),
+                    license: license,
+                    version: version_info.version.to_string(),
                     impementation_description: String::from("installed with composer at project"),
                     path: format!("/vendor/{}", &package_name),
                     reference: package_manager_info.package.repository,
@@ -50,13 +57,20 @@ async fn main() {
             let version_info = search_valid_version(&value, &package_manager_info.package.versions)
                 .expect("Invalid versionFailed to get version");
 
+            let license = version_info
+                .license
+                .clone()
+                .into_iter()
+                .nth(0)
+                .expect("Not found license");
+
             result_file
                 .serialize(PackageRow {
                     name: package_manager_info.package.name,
                     description: package_manager_info.package.description,
-                    copyright: version_info.to_string(),
-                    license: version_info,
-                    version: value.replace("^", ""),
+                    copyright: license.to_string(),
+                    license: license,
+                    version: version_info.version.to_string(),
                     impementation_description: String::from("installed with composer at project"),
                     path: format!("/vendor/{}", &package_name),
                     reference: package_manager_info.package.repository,
@@ -89,10 +103,10 @@ async fn get_package_info(package_name: &String) -> PackagistResponse {
         .expect("[ERROR] -> Failed to parse to json")
 }
 
-fn search_valid_version(
+fn search_valid_version<'a>(
     composer_version: &String,
-    versions: &HashMap<String, PackagistVersion>,
-) -> Result<String, VersionNotFound> {
+    versions: &'a HashMap<String, PackagistVersion>,
+) -> Result<&'a PackagistVersion, VersionNotFound> {
     let mut clean_version = composer_version.replace("v", "");
     clean_version = clean_version.replace("^", "");
     clean_version = clean_version.replace("~", "");
@@ -100,21 +114,21 @@ fn search_valid_version(
 
     // Search with v
     if let Some(copyright_info) = versions.get(&clean_version) {
-        return Ok(copyright_info.license.clone().into_iter().nth(0).unwrap());
+        return Ok(&copyright_info);
     }
 
     clean_version = clean_version.replace("v", "");
 
     // search with none key
     if let Some(copyright_info) = versions.get(&clean_version) {
-        return Ok(copyright_info.license.clone().into_iter().nth(0).unwrap());
+        return Ok(&copyright_info);
     }
 
     clean_version = format!("{}.0", &clean_version);
 
     // search with none key add number
     if let Some(copyright_info) = versions.get(&clean_version) {
-        return Ok(copyright_info.license.clone().into_iter().nth(0).unwrap());
+        return Ok(&copyright_info);
     }
 
     // Serach with v and add number
@@ -122,7 +136,7 @@ fn search_valid_version(
 
     // search with none key add number
     if let Some(copyright_info) = versions.get(&clean_version) {
-        return Ok(copyright_info.license.clone().into_iter().nth(0).unwrap());
+        return Ok(&copyright_info);
     }
 
     Err(VersionNotFound {
