@@ -37,13 +37,6 @@ async fn main() {
             let version_info = search_valid_version(&value, &package_manager_info.package.versions)
                 .expect("Invalid versionFailed to get version");
 
-            let license = version_info
-                .license
-                .clone()
-                .into_iter()
-                .nth(0)
-                .expect("Not found license");
-
             let package_row =
                 composer_package_row(&package_manager_info, version_info, &package_name);
             result_file.serialize(package_row).unwrap();
