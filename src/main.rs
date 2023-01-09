@@ -1,50 +1,11 @@
 use csv::Writer;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::collections::HashMap;
 
-#[derive(Deserialize, Debug)]
-struct Package {
-    require: HashMap<String, String>,
-    #[serde(rename = "require-dev")]
-    require_dev: HashMap<String, String>,
-}
+mod types;
 
-#[derive(Serialize, Deserialize, Debug)]
-struct PackageDoc {
-    name: String,
-    description: String,
-    copyright: String,
-    license: String,
-    version: String,
-    impementation_description: String,
-    path: String,
-    reference: String,
-    language: String,
-    install: String,
-}
-
-#[derive(Deserialize, Debug)]
-struct PackagistPackage {
-    package: PackagistInfo,
-}
-#[derive(Deserialize, Debug)]
-struct PackagistInfo {
-    name: String,
-    description: String,
-    repository: String,
-    language: String,
-    versions: HashMap<String, PackagistVersion>,
-}
-#[derive(Deserialize, Debug, Clone)]
-struct PackagistVersion {
-    version: String,
-    license: Vec<String>,
-}
-#[derive(Debug)]
-struct VersionNotFound {
-    message: String,
-}
+use crate::types::{
+    ComposerPackage, PackageRow, PackagistResponse, PackagistVersion, VersionNotFound,
+};
 
 #[tokio::main]
 async fn main() {
@@ -64,7 +25,7 @@ async fn main() {
                 search_valid_version(&value, &package_manager_info.package.versions).unwrap();
 
             result_file
-                .serialize(PackageDoc {
+                .serialize(PackageRow {
                     name: package_manager_info.package.name,
                     description: package_manager_info.package.description,
                     copyright: version_info.to_string(),
@@ -90,7 +51,7 @@ async fn main() {
                 .expect("Invalid versionFailed to get version");
 
             result_file
-                .serialize(PackageDoc {
+                .serialize(PackageRow {
                     name: package_manager_info.package.name,
                     description: package_manager_info.package.description,
                     copyright: version_info.to_string(),
@@ -109,21 +70,21 @@ async fn main() {
     // dbg!("{:#?}",  result_file);
 }
 
-fn read_file() -> Package {
+fn read_file() -> ComposerPackage {
     let file_path = "/home/gadsdev/projects/rust/generate-libs-docs/files/composer.json";
     let string_file = std::fs::read_to_string(&file_path).unwrap();
 
-    serde_json::from_str::<Package>(&string_file).unwrap()
+    serde_json::from_str::<ComposerPackage>(&string_file).unwrap()
 }
 
-async fn get_package_info(package_name: &String) -> PackagistPackage {
+async fn get_package_info(package_name: &String) -> PackagistResponse {
     let url = format!("https://repo.packagist.org/packages/{}.json", package_name);
 
     let res = reqwest::get(url)
         .await
         .expect("[ERROR] -> Failed to get current price");
 
-    res.json::<PackagistPackage>()
+    res.json::<PackagistResponse>()
         .await
         .expect("[ERROR] -> Failed to parse to json")
 }
