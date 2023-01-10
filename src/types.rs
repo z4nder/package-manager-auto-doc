@@ -15,8 +15,6 @@ pub struct PackageRow {
     pub copyright: String,
     pub license: String,
     pub version: String,
-    pub impementation_description: String,
-    pub path: String,
     pub reference: String,
     pub language: String,
     pub install: String,
