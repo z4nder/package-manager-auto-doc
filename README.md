@@ -3,6 +3,11 @@
   <img src="./images/box.png" alt="Box" width="300px" />
 </h1>
 
+## Result file example
+<h1 align="center">
+  <img src="./images/result.png" alt="Result file example" width="500px" />
+</h1>
+
 <p align="center">This project aims to generate a documentation of the packages contained in the composer.json(PHP) package.json(JS) files.</p>
 
 ## Prerequisites
