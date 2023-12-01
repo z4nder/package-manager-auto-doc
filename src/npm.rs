@@ -1,6 +1,6 @@
-use std::{collections::HashMap, fs::File};
-
 use csv::Writer;
+use std::{collections::HashMap, fs::File};
+use indicatif::ProgressBar;
 
 use crate::helpers::extract_copyright_from_github;
 use crate::types::{NpmMetaData, NpmResponse, PackageJson, PackageRow};
@@ -8,11 +8,13 @@ use crate::types::{NpmMetaData, NpmResponse, PackageJson, PackageRow};
 pub async fn insert_package_json_data_in_to_csv(
     values: HashMap<String, String>,
     csv_file: &mut Writer<File>,
+    bar: &mut ProgressBar,
+    used_in_prod: bool,
 ) {
     for (key, value) in values {
         let package_name = clear_package_json_package_name(key);
 
-        let package_manager_info: NpmResponse = search_npm_package(package_name).await;
+        let package_manager_info: NpmResponse = search_npm_package(package_name.clone()).await;
 
         let github_link = match &package_manager_info.collected.metadata.links.repository {
             None => String::from("empty"),
@@ -24,10 +26,17 @@ pub async fn insert_package_json_data_in_to_csv(
             copyright = extract_copyright_from_github(&github_link).await;
         }
 
-        let package_row =
-            package_json_row(&package_manager_info.collected.metadata, value, copyright);
+        let package_row = package_json_row(
+            &package_manager_info.collected.metadata,
+            value,
+            package_name,
+            copyright,
+            used_in_prod
+        );
 
         csv_file.serialize(package_row).unwrap();
+
+        bar.inc(1);
     }
 }
 
@@ -65,7 +74,9 @@ async fn search_npm_package(package_name: String) -> NpmResponse {
 fn package_json_row(
     package_manager_info: &NpmMetaData,
     version: String,
+    package_name: String,
     copyright: String,
+    used_in_prod: bool
 ) -> PackageRow {
     PackageRow {
         name: package_manager_info.name.to_string(),
@@ -76,8 +87,10 @@ fn package_json_row(
         copyright: copyright,
         license: package_manager_info.license.to_string(),
         version: version,
+        path: format!("/{}/{}", "node_modules", package_name),
         reference: package_manager_info.links.npm.to_string(),
         language: String::from("JavaScript"),
         install: String::from("npm"),
+        used_in_prod: used_in_prod.to_string().to_uppercase(),
     }
 }
