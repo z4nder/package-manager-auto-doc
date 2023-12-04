@@ -1,5 +1,6 @@
 use csv::Writer;
 use std::{collections::HashMap, fs::File};
+use indicatif::ProgressBar;
 
 use crate::helpers::extract_copyright_from_github;
 use crate::types::{
@@ -15,9 +16,12 @@ pub fn read_composer_json(file_path: &str) -> ComposerPackage {
 pub async fn insert_composer_data_in_to_csv(
     values: HashMap<String, String>,
     csv_file: &mut Writer<File>,
+    bar: &mut ProgressBar,
+    used_in_prod: bool,
 ) {
     for (key, value) in values {
         let package_name = key.to_string();
+
         if key != "php" && !key.contains("ext") && key != "enlightn/enlightnpro" {
             let package_manager_info = search_composer_package(&package_name).await;
 
@@ -27,9 +31,18 @@ pub async fn insert_composer_data_in_to_csv(
             let copyright =
                 extract_copyright_from_github(&package_manager_info.package.repository).await;
 
-            let package_row = composer_package_row(&package_manager_info, version_info, copyright);
+            let package_row = composer_package_row(
+                &package_manager_info,
+                version_info,
+                package_name,
+                copyright,
+                used_in_prod
+            );
+
             csv_file.serialize(package_row).unwrap();
         }
+
+        bar.inc(1);
     }
 }
 
@@ -90,7 +103,9 @@ fn search_valid_version<'a>(
 fn composer_package_row(
     package_manager_info: &PackagistResponse,
     version_info: &PackagistVersion,
+    package_name: String,
     copyright: String,
+    used_in_prod: bool,
 ) -> PackageRow {
     let license = version_info
         .license
@@ -105,8 +120,10 @@ fn composer_package_row(
         copyright: copyright,
         license: license,
         version: version_info.version.to_string(),
+        path: format!("/{}/{}", "vendor", package_name),
         reference: package_manager_info.package.repository.to_string(),
         language: package_manager_info.package.language.to_string(),
         install: String::from("composer"),
+        used_in_prod: used_in_prod.to_string().to_uppercase(),
     }
 }

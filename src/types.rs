@@ -15,9 +15,11 @@ pub struct PackageRow {
     pub copyright: String,
     pub license: String,
     pub version: String,
+    pub path: String,
     pub reference: String,
     pub language: String,
     pub install: String,
+    pub used_in_prod: String,
 }
 
 #[derive(Deserialize, Debug)]
